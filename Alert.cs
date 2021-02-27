@@ -53,6 +53,7 @@ namespace ChatAlerts {
                     }
 
                     audioFile = new AudioFileReader(SoundPath);
+                    audioFile.Volume = Volume;
                     audioEvent = new WaveOutEvent();
                     audioEvent.Init(audioFile);
                 } catch (Exception ex) {
@@ -77,7 +78,6 @@ namespace ChatAlerts {
                 if (!PlaySound || audioEvent == null) return false;
                 audioEvent?.Stop();
                 audioFile.Position = 0;
-                audioEvent.Volume = Volume;
                 audioEvent?.Play();
                 return true;
             } else {
