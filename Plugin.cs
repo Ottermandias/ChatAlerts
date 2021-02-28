@@ -85,7 +85,7 @@ namespace ChatAlerts {
         }
 
         public void RemoveCommands() {
-            PluginInterface.CommandManager.RemoveHandler("/pChatAlertsconfig");
+            PluginInterface.CommandManager.RemoveHandler("/chatalerts");
         }
 
         private void BuildUI() {
