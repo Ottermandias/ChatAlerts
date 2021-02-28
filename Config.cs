@@ -35,6 +35,8 @@ namespace ChatAlerts {
         private float alignAlertFieldNames;
         
         private void AlignLabel(string text) {
+            ImGui.Dummy(new Vector2(1, 24 * ImGui.GetIO().FontGlobalScale));
+            ImGui.SameLine();
             var textSize = ImGui.CalcTextSize(text);
 
             if (alignAlertFieldNames - textSize.X < ImGui.GetStyle().ItemSpacing.X * 2) {
@@ -138,6 +140,12 @@ namespace ChatAlerts {
                     ImGui.SameLine();
                     hasChange |= ImGui.Checkbox($"##chatAlerts-alert-ignoreCaseCheckbox-{i}", ref alert.IgnoreCase);
                     
+                    AlignLabel("Sender:");
+                    hasChange |= ImGui.Checkbox($"##chatAlerts-alert-senderAlert-{i}", ref alert.SenderAlert);
+                    
+                    ImGui.SameLine();
+                    ImGui.TextDisabled($"Alert will ONLY parse the {(alert.SenderAlert?"Sender":"Message")}");
+                    
                     AlignLabel("Channels:");
                     var channelListStr = alert.Channels.Contains(XivChatType.None) ? "All" : string.Join(", ", alert.Channels.Where(c => c != XivChatType.CrossParty).Select(c => c.GetDetails()?.FancyName ?? c.ToString()));
                     if (ImGui.BeginCombo("##chatAlerts-alert-channelSelect-{i}", channelListStr, ImGuiComboFlags.HeightLarge)) {
@@ -169,116 +177,121 @@ namespace ChatAlerts {
                     }
                     
                     AlignLabel("Highlight:");
-                    hasChange |= ImGui.Checkbox($"##chatAlerts-alert-highlightCheckbox-{i}", ref alert.Highlight);
 
-                    if (alert.Highlight) {
-                        ImGui.SameLine();
-                        ImGui.Text("Text Colour:");
-                        ImGui.SameLine();
-                        ImGui.SetNextItemWidth(600);
+                    if (alert.SenderAlert) {
+                        ImGui.TextDisabled("Not supported with Sender Alerts.");
+                    } else {
+                        hasChange |= ImGui.Checkbox($"##chatAlerts-alert-highlightCheckbox-{i}", ref alert.Highlight);
 
-                        var fc = pluginInterface.Data.Excel.GetSheet<UIColor>().GetRow(alert.HighlightForeground);
-                        var fa = fc.UIForeground & 255;
-                        var fb = (fc.UIForeground >> 8) & 255;
-                        var fg = (fc.UIForeground >> 16) & 255;
-                        var fr = (fc.UIForeground >> 24) & 255;
-                        
-                        var fColor = new Vector4(fr / 255f, fg / 255f, fb / 255f, fa / 255f);
-                        ImGui.PushStyleColor(ImGuiCol.ChildBg, fColor);
-                        ImGui.BeginChild($"###chatAlerts-alert-highlightColor-preview", new Vector2(24 * ImGui.GetIO().FontGlobalScale), true);
-                        ImGui.EndChild();
-                        if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) {
-                            alert.HighlightForeground = 0;
-                            hasChange = true;
-                        }
-                        ImGui.PopStyleColor();
-                        ImGui.SameLine();
+                        if (alert.Highlight) {
+                            ImGui.SameLine();
+                            ImGui.Text("Text Colour:");
+                            ImGui.SameLine();
+                            ImGui.SetNextItemWidth(600);
 
-                        if (ImGui.BeginCombo($"##chatAlerts-alert-highlightColor-{i}", "", ImGuiComboFlags.NoPreview)) {
-
-                            var counter = 0;
-                            foreach (var c in pluginInterface.Data.Excel.GetSheet<UIColor>()) {
-                                var a = c.UIForeground & 255;
-                                var b = (c.UIForeground >> 8) & 255;
-                                var g = (c.UIForeground >> 16) & 255;
-                                var r = (c.UIForeground >> 24) & 255;
-
-                                if (a == 0) continue;
-
-
-                                var color = new Vector4(r / 255f, g / 255f, b / 255f, a / 255f);
-
-
-                                ImGui.PushStyleColor(ImGuiCol.ChildBg, color);
-                                ImGui.BeginChild($"###chatAlerts-alert-highlightColor-option-{c.RowId}", new Vector2(24 * ImGui.GetIO().FontGlobalScale), true);
-                                ImGui.EndChild();
-                                if (ImGui.IsItemClicked()) {
-                                    alert.HighlightForeground = c.RowId;
-                                    hasChange = true;
-                                    ImGui.CloseCurrentPopup();
-                                }
-
-                                if (ImGui.IsItemHovered()) {
-                                    ImGui.SetTooltip($"{c.RowId}");
-                                }
-
-                                ImGui.PopStyleColor();
-                                if (++counter % 10 != 0) ImGui.SameLine();
-                            }
-                            ImGui.EndCombo();
-                        }
-
-                        ImGui.SameLine();
-                        ImGui.Text("Glow Colour:");
-                        ImGui.SameLine();
-                        var gc = pluginInterface.Data.Excel.GetSheet<UIColor>().GetRow(alert.HighlightGlow);
-                        var ga = gc.UIGlow & 255;
-                        var gb = (gc.UIGlow >> 8) & 255;
-                        var gg = (gc.UIGlow >> 16) & 255;
-                        var gr = (gc.UIGlow >> 24) & 255;
-                        
-                        var gColor = new Vector4(gr / 255f, gg / 255f, gb / 255f, ga / 255f);
-                        ImGui.PushStyleColor(ImGuiCol.ChildBg, gColor);
-                        ImGui.BeginChild($"###chatAlerts-alert-highlightGlowColor-preview", new Vector2(24 * ImGui.GetIO().FontGlobalScale), true);
-                        ImGui.EndChild();
-                        if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) {
-                            alert.HighlightGlow = 0;
-                            hasChange = true;
-                        }
-                        ImGui.PopStyleColor();
-                        ImGui.SameLine();
-                        
-                        if (ImGui.BeginCombo($"##chatAlerts-alert-highlightGlow-{i}", "", ImGuiComboFlags.NoPreview)) {
+                            var fc = pluginInterface.Data.Excel.GetSheet<UIColor>().GetRow(alert.HighlightForeground);
+                            var fa = fc.UIForeground & 255;
+                            var fb = (fc.UIForeground >> 8) & 255;
+                            var fg = (fc.UIForeground >> 16) & 255;
+                            var fr = (fc.UIForeground >> 24) & 255;
                             
-                            var counter = 0;
-                            foreach (var c in pluginInterface.Data.Excel.GetSheet<UIColor>()) {
-                                var a = c.UIGlow & 255;
-                                var b = (c.UIGlow >> 8) & 255;
-                                var g = (c.UIGlow >> 16) & 255;
-                                var r = (c.UIGlow >> 24) & 255;
-                                
-                                if (a == 0) continue;
-                                
-
-                                var color = new Vector4(r / 255f, g / 255f, b / 255f, a / 255f);
-                                
-                                
-                                ImGui.PushStyleColor(ImGuiCol.ChildBg, color);
-                                ImGui.BeginChild($"###chatAlerts-alert-highlightGlowColor-option-{c.RowId}", new Vector2(24 * ImGui.GetIO().FontGlobalScale), true);
-                                ImGui.EndChild();
-                                if (ImGui.IsItemClicked()) {
-                                    alert.HighlightGlow = c.RowId;
-                                    hasChange = true;
-                                    ImGui.CloseCurrentPopup();
-                                }
-                                if (ImGui.IsItemHovered()) {
-                                    ImGui.SetTooltip($"{c.RowId}");
-                                }
-                                ImGui.PopStyleColor();
-                                if (++counter % 10 != 0) ImGui.SameLine();
+                            var fColor = new Vector4(fr / 255f, fg / 255f, fb / 255f, fa / 255f);
+                            ImGui.PushStyleColor(ImGuiCol.ChildBg, fColor);
+                            ImGui.BeginChild($"###chatAlerts-alert-highlightColor-preview", new Vector2(24 * ImGui.GetIO().FontGlobalScale), true);
+                            ImGui.EndChild();
+                            if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) {
+                                alert.HighlightForeground = 0;
+                                hasChange = true;
                             }
+                            ImGui.PopStyleColor();
+                            ImGui.SameLine();
+
+                            if (ImGui.BeginCombo($"##chatAlerts-alert-highlightColor-{i}", "", ImGuiComboFlags.NoPreview)) {
+
+                                var counter = 0;
+                                foreach (var c in pluginInterface.Data.Excel.GetSheet<UIColor>()) {
+                                    var a = c.UIForeground & 255;
+                                    var b = (c.UIForeground >> 8) & 255;
+                                    var g = (c.UIForeground >> 16) & 255;
+                                    var r = (c.UIForeground >> 24) & 255;
+
+                                    if (a == 0) continue;
+
+
+                                    var color = new Vector4(r / 255f, g / 255f, b / 255f, a / 255f);
+
+
+                                    ImGui.PushStyleColor(ImGuiCol.ChildBg, color);
+                                    ImGui.BeginChild($"###chatAlerts-alert-highlightColor-option-{c.RowId}", new Vector2(24 * ImGui.GetIO().FontGlobalScale), true);
+                                    ImGui.EndChild();
+                                    if (ImGui.IsItemClicked()) {
+                                        alert.HighlightForeground = c.RowId;
+                                        hasChange = true;
+                                        ImGui.CloseCurrentPopup();
+                                    }
+
+                                    if (ImGui.IsItemHovered()) {
+                                        ImGui.SetTooltip($"{c.RowId}");
+                                    }
+
+                                    ImGui.PopStyleColor();
+                                    if (++counter % 10 != 0) ImGui.SameLine();
+                                }
+                                ImGui.EndCombo();
+                            }
+
+                            ImGui.SameLine();
+                            ImGui.Text("Glow Colour:");
+                            ImGui.SameLine();
+                            var gc = pluginInterface.Data.Excel.GetSheet<UIColor>().GetRow(alert.HighlightGlow);
+                            var ga = gc.UIGlow & 255;
+                            var gb = (gc.UIGlow >> 8) & 255;
+                            var gg = (gc.UIGlow >> 16) & 255;
+                            var gr = (gc.UIGlow >> 24) & 255;
                             
-                            ImGui.EndCombo();
+                            var gColor = new Vector4(gr / 255f, gg / 255f, gb / 255f, ga / 255f);
+                            ImGui.PushStyleColor(ImGuiCol.ChildBg, gColor);
+                            ImGui.BeginChild($"###chatAlerts-alert-highlightGlowColor-preview", new Vector2(24 * ImGui.GetIO().FontGlobalScale), true);
+                            ImGui.EndChild();
+                            if (ImGui.IsItemClicked(ImGuiMouseButton.Right)) {
+                                alert.HighlightGlow = 0;
+                                hasChange = true;
+                            }
+                            ImGui.PopStyleColor();
+                            ImGui.SameLine();
+                            
+                            if (ImGui.BeginCombo($"##chatAlerts-alert-highlightGlow-{i}", "", ImGuiComboFlags.NoPreview)) {
+                                
+                                var counter = 0;
+                                foreach (var c in pluginInterface.Data.Excel.GetSheet<UIColor>()) {
+                                    var a = c.UIGlow & 255;
+                                    var b = (c.UIGlow >> 8) & 255;
+                                    var g = (c.UIGlow >> 16) & 255;
+                                    var r = (c.UIGlow >> 24) & 255;
+                                    
+                                    if (a == 0) continue;
+                                    
+
+                                    var color = new Vector4(r / 255f, g / 255f, b / 255f, a / 255f);
+                                    
+                                    
+                                    ImGui.PushStyleColor(ImGuiCol.ChildBg, color);
+                                    ImGui.BeginChild($"###chatAlerts-alert-highlightGlowColor-option-{c.RowId}", new Vector2(24 * ImGui.GetIO().FontGlobalScale), true);
+                                    ImGui.EndChild();
+                                    if (ImGui.IsItemClicked()) {
+                                        alert.HighlightGlow = c.RowId;
+                                        hasChange = true;
+                                        ImGui.CloseCurrentPopup();
+                                    }
+                                    if (ImGui.IsItemHovered()) {
+                                        ImGui.SetTooltip($"{c.RowId}");
+                                    }
+                                    ImGui.PopStyleColor();
+                                    if (++counter % 10 != 0) ImGui.SameLine();
+                                }
+                                
+                                ImGui.EndCombo();
+                            }
                         }
                     }
                     

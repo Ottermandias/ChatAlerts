@@ -114,7 +114,7 @@ namespace ChatAlerts {
                 if (alert.IsRegex && alert.CompiledRegex == null) continue;
                 if (string.IsNullOrEmpty(alert.Content)) continue;
                 var newPayloads = new List<Payload>();
-                foreach (var payload in message.Payloads) {
+                foreach (var payload in alert.SenderAlert ? sender.Payloads : message.Payloads) {
                     if (!(payload is TextPayload tp)) {
                         newPayloads.Add(payload);
                         continue;
@@ -181,7 +181,10 @@ namespace ChatAlerts {
                 }
 
                 if (!alertMatch) continue;
-                message = new SeString(newPayloads);
+                if (!alert.SenderAlert) {
+                    message = new SeString(newPayloads);
+                }
+                
                 if (!soundPlayed) soundPlayed = alert.StartSound(this);
             }
         }
