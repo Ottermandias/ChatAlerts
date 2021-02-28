@@ -35,6 +35,7 @@ namespace ChatAlerts {
             PluginInterface.UiBuilder.OnBuildUi -= this.BuildUI;
             PluginInterface.UiBuilder.OnOpenConfigUi -= this.OnConfigCommandHandler;
             PluginInterface.Framework.Gui.Chat.OnChatMessage -= OnChatMessage;
+            PluginInterface.Framework.Gui.Chat.OnCheckMessageHandled -= OnCheckMessageHandled;
 
             PluginConfig.Dispose();
 
@@ -66,6 +67,7 @@ namespace ChatAlerts {
             PluginInterface.UiBuilder.OnBuildUi += this.BuildUI;
             PluginInterface.UiBuilder.OnOpenConfigUi += this.OnConfigCommandHandler;
             PluginInterface.Framework.Gui.Chat.OnChatMessage += OnChatMessage;
+            PluginInterface.Framework.Gui.Chat.OnCheckMessageHandled += OnCheckMessageHandled;
 
             UpdateAlerts();
             SetupCommands();
@@ -106,10 +108,10 @@ namespace ChatAlerts {
             PluginLog.Log($"Watching Channels: { (watchAllChannels ? "All" : string.Join(",", watchedChannels)) }");
         }
         
-        private void OnChatMessage(XivChatType type, uint senderId, ref SeString sender, ref SeString message, ref bool isHandled) {
+        private void HandleMessage(XivChatType type, ref SeString sender, ref SeString message, bool preFilter) {
             if (!(watchAllChannels || watchedChannels.Contains(type))) return;
             var soundPlayed = false;
-            foreach (var alert in PluginConfig.Alerts.Where(a => a.Enabled && (a.Channels.Contains(XivChatType.None) || a.Channels.Contains(type)))) {
+            foreach (var alert in PluginConfig.Alerts.Where(a => a.Enabled && a.IncludeHidden == preFilter && (a.Channels.Contains(XivChatType.None) || a.Channels.Contains(type)))) {
                 var alertMatch = false;
                 if (alert.IsRegex && alert.CompiledRegex == null) continue;
                 if (string.IsNullOrEmpty(alert.Content)) continue;
@@ -186,9 +188,15 @@ namespace ChatAlerts {
                 }
                 
                 if (!soundPlayed) soundPlayed = alert.StartSound(this);
-            }
+            }            
         }
         
+        private void OnChatMessage(XivChatType type, uint senderId, ref SeString sender, ref SeString message, ref bool isHandled) {
+            HandleMessage(type, ref sender, ref message, false);
+        }
         
+        private void OnCheckMessageHandled(XivChatType type, uint senderid, ref SeString sender, ref SeString message, ref bool ishandled) {
+            HandleMessage(type, ref sender, ref message, true);
+        }
     }
 }

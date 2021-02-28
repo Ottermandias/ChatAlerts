@@ -144,7 +144,9 @@ namespace ChatAlerts {
                     hasChange |= ImGui.Checkbox($"##chatAlerts-alert-senderAlert-{i}", ref alert.SenderAlert);
                     
                     ImGui.SameLine();
-                    ImGui.TextDisabled($"Alert will ONLY parse the {(alert.SenderAlert?"Sender":"Message")}");
+                    ImGui.Text("    Trigger on filtered messages:");
+                    ImGui.SameLine();
+                    hasChange |= ImGui.Checkbox($"##chatAlerts-alert-includeHidden{i}", ref alert.IncludeHidden);
                     
                     AlignLabel("Channels:");
                     var channelListStr = alert.Channels.Contains(XivChatType.None) ? "All" : string.Join(", ", alert.Channels.Where(c => c != XivChatType.CrossParty).Select(c => c.GetDetails()?.FancyName ?? c.ToString()));

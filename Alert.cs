@@ -16,6 +16,7 @@ namespace ChatAlerts {
         public bool IgnoreCase = true;
         public bool CustomSound;
         public bool SenderAlert = false;
+        public bool IncludeHidden = false;
 
         public bool Highlight = true;
         public uint HighlightForeground = 500;
