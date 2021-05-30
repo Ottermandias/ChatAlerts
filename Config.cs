@@ -7,7 +7,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
-using Dalamud.Game.Chat;
+using Dalamud.Game.Text;
 using Dalamud.Interface;
 using Lumina.Excel.GeneratedSheets;
 

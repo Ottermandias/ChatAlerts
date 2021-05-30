@@ -5,7 +5,7 @@
     "Play sounds and highlight text based on defined filters."
   ],
   "InternalName": "Chat Alerts",
-  "AssemblyVersion": "1.0.0.0",
+  "AssemblyVersion": "1.0.0.1",
   "RepoUrl": "https://github.com/Caraxi/ChatAlerts",
   "ApplicableVersion": "any",
   "DalamudApiLevel": 2
