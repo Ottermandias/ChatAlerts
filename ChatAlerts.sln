@@ -3,7 +3,12 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31019.35
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatAlerts", "ChatAlerts.csproj", "{61DF713A-A526-41D7-9D89-93959308D513}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChatAlerts", "ChatAlerts.csproj", "{61DF713A-A526-41D7-9D89-93959308D513}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{690B2EDB-4B12-49C7-9734-3CB4406A684C}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

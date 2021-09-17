@@ -1,99 +1,76 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
+using ChatAlerts.SeFunctions;
 using Dalamud.Game.Text;
-using Dalamud.Plugin;
-using NAudio.Wave;
-using Newtonsoft.Json;
 
-namespace ChatAlerts {
-    public class Alert : IDisposable {
-        public List<XivChatType> Channels = new();
-        public string Name = "New Alert";
-        public string Content = string.Empty;
+namespace ChatAlerts
+{
+    public class Alert : IDisposable
+    {
+        public List<XivChatType> Channels  = new();
+        public string            Name      = "New Alert";
+        public string            Content   = string.Empty;
+        public string            SoundPath = string.Empty;
+
+        public float  Volume              = 0.5f;
+        public ushort HighlightForeground = 500;
+        public ushort HighlightGlow;
+        public Sounds SoundEffect = Sounds.Sound02;
+
         public bool Enabled = true;
         public bool IsRegex;
         public bool IgnoreCase = true;
         public bool CustomSound;
-        public bool SenderAlert = false;
+        public bool SenderAlert   = false;
         public bool IncludeHidden = false;
-
-        public bool Highlight = true;
-        public uint HighlightForeground = 500;
-        public uint HighlightGlow;
-
+        public bool Highlight     = true;
         public bool PlaySound;
-        public SoundEffect SoundEffect = ChatAlerts.SoundEffect.SoundEffect2;
-        public string SoundPath = string.Empty;
-        public float Volume = 0.5f;
 
-        [NonSerialized] public Regex CompiledRegex;
-        [NonSerialized] private AudioFileReader audioFile;
-        [NonSerialized] private WaveOutEvent audioEvent;
 
-        [JsonIgnore] public bool SoundReady => audioFile != null && audioEvent != null;
+        [NonSerialized]
+        private readonly AlertCache _cache = new();
 
-        public void Update() {
-            this.CompiledRegex = null;
-            if (this.IsRegex) {
-                try {
-                    var regexOptions = RegexOptions.CultureInvariant;
-                    if (this.IgnoreCase) regexOptions |= RegexOptions.IgnoreCase;
-                    this.CompiledRegex = new Regex(this.Content, regexOptions);
-                } catch {
-                    this.CompiledRegex = null;
-                }
-            }
+        public bool StartSound()
+        {
+            if (!PlaySound)
+                return false;
 
-            if (PlaySound && CustomSound) {
-                try {
-                    if (audioFile?.FileName != SoundPath) {
-                        audioEvent?.Dispose();
-                        audioEvent = null;
-                        audioFile?.Dispose();
-                        audioFile = null;
-                    }
+            if (CustomSound)
+                return _cache.PlaySound();
 
-                    audioFile = new AudioFileReader(SoundPath);
-                    audioFile.Volume = Volume;
-                    audioEvent = new WaveOutEvent();
-                    audioEvent.Init(audioFile);
-                } catch (Exception ex) {
-                    PluginLog.Error(ex, "Error attempting to setup sound.");
-                    audioEvent?.Dispose();
-                    audioEvent = null;
-                    audioFile?.Dispose();
-                    audioFile = null;
-                }
-            } else {
-                audioEvent?.Dispose();
-                audioEvent = null;
-                audioFile?.Dispose();
-                audioFile = null;
-            }
+            ChatAlerts.PlaySound.Play(SoundEffect);
+            return true;
         }
 
-        public bool StartSound(Plugin plugin) {
-            if (!PlaySound) return false;
+        public bool SoundReady()
+            => !CustomSound || _cache.SoundReady;
 
-            if (CustomSound) {
-                if (!PlaySound || audioEvent == null) return false;
-                audioEvent?.Stop();
-                audioFile.Position = 0;
-                audioEvent?.Play();
-                return true;
-            } else {
-                plugin.PlayGameSound(SoundEffect);
+        public bool CanMatch()
+            => Content.Length > 0 && (!IsRegex || _cache.CompiledRegex != null);
 
-                return true;
+        public (int From, int Length) Match(string text, int startIdx)
+        {
+            if (IsRegex)
+            {
+                var match = _cache.CompiledRegex!.Match(text, startIdx);
+                return match.Success ? (match.Index, match.Length) : (-1, 0);
             }
+
+            var comparison = IgnoreCase ? StringComparison.InvariantCultureIgnoreCase : StringComparison.InvariantCulture;
+            var idx        = text.IndexOf(Content, startIdx, comparison);
+            return idx >= 0 ? (idx, Content.Length) : (-1, 0);
         }
 
-        public void Dispose() {
-            audioEvent?.Dispose();
-            audioEvent = null;
-            audioFile?.Dispose();
-            audioFile = null;
-        }
+        public void Update()
+            => _cache.Update(this);
+
+        public void UpdateRegex()
+            => _cache.UpdateRegex(this);
+
+        public void UpdateAudio()
+            => _cache.UpdateAudio(this);
+
+        public void Dispose()
+            => _cache.Dispose();
     }
 }

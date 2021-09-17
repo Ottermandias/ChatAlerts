@@ -1,8 +1,10 @@
-﻿namespace ChatAlerts {
-    public enum ConfigAction {
+﻿namespace ChatAlerts
+{
+    public enum ConfigAction
+    {
         None,
         Delete,
         MoveUp,
-        MoveDown
+        MoveDown,
     }
 }
