@@ -34,8 +34,8 @@ namespace ChatAlerts
 
 
             _interface = new Interface(this);
-#if DEBUG
-            _debug = new DebugHelper();
+#if false && DEBUG
+            Debug = new DebugHelper();
 #endif
 
             Dalamud.Commands.AddHandler(CommandName, new CommandInfo(OnConfigCommandHandler)

@@ -15,7 +15,7 @@ namespace ChatAlerts
         private ulong PlaySoundDetour(Sounds id, ulong a2, ulong a3)
         {
             var ret = PlaySoundHook!.Original(id, a2, a3);
-            PluginLog.Debug($"Play Sound: {id} [{a2}, {a3}] => {ret}");
+            PluginLog.Verbose($"Play Sound: {id} [{a2}, {a3}] => {ret}");
             return ret;
         }
 
