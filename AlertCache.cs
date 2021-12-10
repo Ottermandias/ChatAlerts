@@ -43,6 +43,8 @@ namespace ChatAlerts
                 if (parent.IgnoreCase)
                     regexOptions |= RegexOptions.IgnoreCase;
                 CompiledRegex = new Regex(parent.Content, regexOptions);
+                if (CompiledRegex.Match(string.Empty).Success)
+                    CompiledRegex = null;
             }
             catch (Exception ex)
             {
