@@ -5,8 +5,8 @@
     <PlatformTarget>x64</PlatformTarget>
 		<RootNamespace>ChatAlerts</RootNamespace>
 		<AssemblyName>ChatAlerts</AssemblyName>
-		<FileVersion>2.0.0.3</FileVersion>
-    <AssemblyVersion>2.0.0.3</AssemblyVersion>
+		<FileVersion>2.0.0.4</FileVersion>
+    <AssemblyVersion>2.0.0.4</AssemblyVersion>
     <Product>ChatAlerts</Product>
     <Copyright>Copyright © 2021</Copyright>
 		<Deterministic>true</Deterministic>

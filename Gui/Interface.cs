@@ -6,6 +6,7 @@ using ChatAlerts.Gui.Raii;
 using ChatAlerts.SeFunctions;
 using Dalamud.Game.Text;
 using Dalamud.Interface;
+using Dalamud.Interface.Components;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 
@@ -19,15 +20,16 @@ namespace ChatAlerts.Gui
         private readonly Dictionary<ushort, Vector4> _glowColors;
 
         private readonly Sounds[] _validSounds =
-            ((Sounds[]) Enum.GetValues(typeof(Sounds))).Where(s => s != Sounds.None && s != Sounds.Unknown).ToArray();
+            ((Sounds[])Enum.GetValues(typeof(Sounds))).Where(s => s != Sounds.None && s != Sounds.Unknown).ToArray();
 
         private readonly string _chatAlertsHeader;
         private          float  _scale;
 
-        private ConfigAction _action = ConfigAction.None;
-        private Alert?       _changedAlert;
-        private Vector2      _colorPreviewSize = Vector2.Zero;
-        private bool         _changes;
+        private readonly ChatAlerts   _plugin;
+        private          ConfigAction _action = ConfigAction.None;
+        private          Alert?       _changedAlert;
+        private          Vector2      _colorPreviewSize = Vector2.Zero;
+        private          bool         _changes;
 
         private void ResetChange()
         {
@@ -38,18 +40,17 @@ namespace ChatAlerts.Gui
 
         public Interface(ChatAlerts plugin)
         {
-            ChatAlerts plugin1 = plugin;
-
+            _plugin = plugin;
             _chatAlertsHeader = ChatAlerts.Version.Length > 0
-                ? $"{plugin1.Name} v{ChatAlerts.Version}###{plugin1.Name}Main"
-                : $"{plugin1.Name}###{plugin1.Name}Main";
+                ? $"{plugin.Name} v{ChatAlerts.Version}###{plugin.Name}Main"
+                : $"{plugin.Name}###{plugin.Name}Main";
 
             Dalamud.PluginInterface.UiBuilder.Draw         += Draw;
             Dalamud.PluginInterface.UiBuilder.OpenConfigUi += ToggleVisibility;
 
             var colorSheet = Dalamud.GameData.Excel.GetSheet<UIColor>()!;
-            _foregroundColors = new Dictionary<ushort, Vector4>((int) colorSheet.RowCount);
-            _glowColors       = new Dictionary<ushort, Vector4>((int) colorSheet.RowCount);
+            _foregroundColors = new Dictionary<ushort, Vector4>((int)colorSheet.RowCount);
+            _glowColors       = new Dictionary<ushort, Vector4>((int)colorSheet.RowCount);
             foreach (var color in colorSheet)
             {
                 var fa = color.UIForeground & 255;
@@ -58,7 +59,7 @@ namespace ChatAlerts.Gui
                     var fb = (color.UIForeground >> 8) & 255;
                     var fg = (color.UIForeground >> 16) & 255;
                     var fr = (color.UIForeground >> 24) & 255;
-                    _foregroundColors[(ushort) color.RowId] = new Vector4(fr / 255f, fg / 255f, fb / 255f, fa / 255f);
+                    _foregroundColors[(ushort)color.RowId] = new Vector4(fr / 255f, fg / 255f, fb / 255f, fa / 255f);
                 }
 
                 var ga = color.UIGlow & 255;
@@ -67,7 +68,7 @@ namespace ChatAlerts.Gui
                     var gb = (color.UIGlow >> 8) & 255;
                     var gg = (color.UIGlow >> 16) & 255;
                     var gr = (color.UIGlow >> 24) & 255;
-                    _glowColors[(ushort) color.RowId] = new Vector4(gr / 255f, gg / 255f, gb / 255f, ga / 255f);
+                    _glowColors[(ushort)color.RowId] = new Vector4(gr / 255f, gg / 255f, gb / 255f, ga / 255f);
                 }
             }
         }
@@ -92,6 +93,7 @@ namespace ChatAlerts.Gui
 
             ImGui.SetCursorPosX(_alignAlertFieldNames - textSize.X);
 
+            ImGui.AlignTextToFramePadding();
             ImGui.Text(text);
             ImGui.SameLine();
         }
@@ -99,12 +101,28 @@ namespace ChatAlerts.Gui
         private void DrawMoveButton(Alert alert, int idx)
         {
             using var font = ImGuiRaii.PushFont(UiBuilder.IconFont);
-            if (!ImGui.Button($"{FontAwesomeIcon.ArrowUp.ToIconChar()}##moveUp{idx}",
-                new Vector2(ImGui.GetItemRectSize().Y)))
-                return;
+            if (ImGui.Button($"{FontAwesomeIcon.ArrowUp.ToIconChar()}##moveUp{idx}",
+                    new Vector2(ImGui.GetItemRectSize().Y)))
+            {
+                _changedAlert = alert;
+                _action       = ConfigAction.MoveUp;
+            }
 
-            _changedAlert = alert;
-            _action       = ConfigAction.MoveUp;
+            font.Pop();
+
+            ImGuiCustom.HoverTooltip("Move this alarm one place up in the list.");
+            ImGui.SameLine();
+            font.Push(UiBuilder.IconFont);
+            if (ImGui.Button($"{FontAwesomeIcon.ArrowDown.ToIconChar()}##moveUp{idx}",
+                    new Vector2(ImGui.GetItemRectSize().Y)))
+            {
+                _changedAlert = alert;
+                _action       = ConfigAction.MoveDown;
+            }
+
+            font.Pop();
+
+            ImGuiCustom.HoverTooltip("Move this alarm one place down in the list.");
         }
 
         private void DrawDeleteButton(Alert alert, int idx)
@@ -172,7 +190,9 @@ namespace ChatAlerts.Gui
             _changes |= ImGui.Checkbox($"##alertEnabled{idx}", ref alert.Enabled);
 
             ImGui.SameLine();
+            ImGui.AlignTextToFramePadding();
             ImGui.Text("    Use RegEx:");
+            var hover = ImGui.IsItemHovered();
             ImGui.SameLine();
             if (ImGui.Checkbox($"##alertRegex{idx}", ref alert.IsRegex))
             {
@@ -180,8 +200,15 @@ namespace ChatAlerts.Gui
                 _changes = true;
             }
 
+            if (hover || ImGui.IsItemHovered())
+                ImGui.SetTooltip("Use Regular Expressions for the content of the alert.\n"
+                  + "If the content is not a valid regular expression, the border will be colored red.");
+
+
             ImGui.SameLine();
+            ImGui.AlignTextToFramePadding();
             ImGui.Text("    Ignore Case:");
+            hover = ImGui.IsItemHovered();
             ImGui.SameLine();
             if (ImGui.Checkbox($"##alertIgnoreCase{idx}", ref alert.IgnoreCase))
             {
@@ -189,13 +216,23 @@ namespace ChatAlerts.Gui
                 _changes = true;
             }
 
+            if (hover || ImGui.IsItemHovered())
+                ImGui.SetTooltip("Ignore case on the content of the alert and the messages it searches.");
+
             AlignLabel("Sender:");
+            hover    =  ImGui.IsItemHovered();
             _changes |= ImGui.Checkbox($"##alertSender{idx}", ref alert.SenderAlert);
+            if (hover || ImGui.IsItemHovered())
+                ImGui.SetTooltip("Search ONLY the sender of messages instead of the message itself for this alarm.");
 
             ImGui.SameLine();
             ImGui.Text("    Trigger on filtered messages:");
+            hover = ImGui.IsItemHovered();
             ImGui.SameLine();
             _changes |= ImGui.Checkbox($"##alertIncludeHidden{idx}", ref alert.IncludeHidden);
+            if (hover || ImGui.IsItemHovered())
+                ImGui.SetTooltip(
+                    "Trigger the audio alert on this message also on messages that are otherwise filtered by the game or other plugins and not displayed.");
         }
 
         private void DrawChannels(Alert alert, int idx)
@@ -213,7 +250,7 @@ namespace ChatAlerts.Gui
                 using var raii = ImGuiRaii.DeferredEnd(ImGui.EndCombo)
                     .Push(ImGui.Columns);
 
-                foreach (var chatType in (XivChatType[]) Enum.GetValues(typeof(XivChatType)))
+                foreach (var chatType in (XivChatType[])Enum.GetValues(typeof(XivChatType)))
                 {
                     if (chatType == XivChatType.CrossParty || chatType == XivChatType.Debug || chatType == XivChatType.Urgent)
                         continue;
@@ -221,7 +258,7 @@ namespace ChatAlerts.Gui
                     var name = chatType == XivChatType.None ? "All" : chatType.GetDetails()?.FancyName ?? chatType.ToString();
                     var e    = alert.Channels.Contains(chatType);
 
-                    if (ImGui.Checkbox($"{name}##alertChannelOption{(ushort) chatType}", ref e))
+                    if (ImGui.Checkbox($"{name}##alertChannelOption{(ushort)chatType}", ref e))
                     {
                         alert.Channels.RemoveAll(c => c == chatType || c == XivChatType.CrossParty && chatType == XivChatType.Party);
                         if (e)
@@ -300,7 +337,10 @@ namespace ChatAlerts.Gui
         private void DrawHighlights(Alert alert, int idx)
         {
             AlignLabel("Highlight:");
+            var hover = ImGui.IsItemHovered();
             _changes |= ImGui.Checkbox($"##alertHighlight{idx}", ref alert.Highlight);
+            if (hover || ImGui.IsItemHovered())
+                ImGui.SetTooltip("Highlight any matches of this alert inside any messages with available chat colors.");
             if (!alert.Highlight)
                 return;
 
@@ -342,8 +382,8 @@ namespace ChatAlerts.Gui
                 a.Channels.Add(XivChatType.Party);
                 a.Channels.Add(XivChatType.Alliance);
                 a.Channels.Add(XivChatType.FreeCompany);
-                a.Update();
                 ChatAlerts.Config.Alerts.Add(a);
+                _plugin.Watcher.UpdateAlert(a);
                 _changes = true;
             }
         }
@@ -460,11 +500,15 @@ namespace ChatAlerts.Gui
         private void DrawAudio(Alert alert, int idx)
         {
             AlignLabel("Audio Alert:");
+            var hover = ImGui.IsItemHovered();
             if (ImGui.Checkbox($"##alertPlaySound{idx}", ref alert.PlaySound))
             {
                 alert.UpdateAudio();
                 _changes = true;
             }
+
+            if (hover || ImGui.IsItemHovered())
+                ImGui.SetTooltip("Play either an in-game sound effect or a custom effect whenever this alarm matches a message.");
 
             if (!alert.PlaySound)
                 return;

@@ -29,14 +29,17 @@ namespace ChatAlerts
             _watchAllChannels = false;
 
             foreach (var alert in Alerts)
-            {
-                alert.Update();
-                _watchAllChannels |= alert.Channels.Contains(XivChatType.None);
-                if (!_watchAllChannels)
-                    _watchedChannels.UnionWith(alert.Channels);
-            }
+                UpdateAlert(alert);
 
             PluginLog.Debug($"Watching Channels: {(_watchAllChannels ? "All" : string.Join(", ", _watchedChannels))}");
+        }
+
+        internal void UpdateAlert(Alert alert)
+        {
+            alert.Update();
+            _watchAllChannels |= alert.Channels.Contains(XivChatType.None);
+            if (!_watchAllChannels)
+                _watchedChannels.UnionWith(alert.Channels);
         }
 
         public void Dispose()
@@ -63,7 +66,7 @@ namespace ChatAlerts
                     continue;
 
                 var oldIdx = 0;
-                var idx    = alert.Match(tp.Text, oldIdx);
+                var idx    = alert.Match(tp.Text ?? string.Empty, oldIdx);
                 if (idx.From < 0)
                     continue;
 
@@ -123,7 +126,6 @@ namespace ChatAlerts
             {
                 var payloads   = alert.SenderAlert ? sender.Payloads : message.Payloads;
                 var alertMatch = HandleAlert(alert, payloads, out payloads);
-                PluginLog.Debug(string.Join(" ", new SeString(payloads).Encode()));
                 if (alert.SenderAlert)
                     sender = new SeString(payloads);
                 else

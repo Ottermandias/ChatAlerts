@@ -20,7 +20,7 @@ namespace ChatAlerts
         public static    PlaySound        PlaySound { get; private set; } = null!;
         public readonly  DebugHelper?     Debug = null;
         private readonly Interface        _interface;
-        private readonly ChatWatcher      _watcher;
+        public readonly ChatWatcher      Watcher;
 
         public static string Version { get; private set; } = string.Empty;
 
@@ -30,8 +30,7 @@ namespace ChatAlerts
             Config    = ChatAlertsConfig.Load();
             Version   = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "";
             PlaySound = new PlaySound(Dalamud.SigScanner);
-            _watcher  = new ChatWatcher();
-
+            Watcher  = new ChatWatcher();
 
             _interface = new Interface(this);
 #if false && DEBUG
@@ -52,7 +51,7 @@ namespace ChatAlerts
         public void Dispose()
         {
             _interface.Dispose();
-            _watcher.Dispose();
+            Watcher.Dispose();
             Config.Dispose();
             Dalamud.Commands.RemoveHandler(CommandName);
             Debug?.Dispose();
