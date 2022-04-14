@@ -270,6 +270,7 @@ namespace ChatAlerts.Gui
 
                         alert.Channels.Sort();
                         _changes = true;
+                        _plugin.Watcher.UpdateAlert(alert);
                     }
 
                     ImGui.NextColumn();
