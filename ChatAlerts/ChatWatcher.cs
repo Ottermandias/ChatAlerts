@@ -81,8 +81,8 @@ namespace ChatAlerts
 
                 do
                 {
-                    var preString   = tp.Text.Substring(oldIdx,   idx.From - oldIdx);
-                    var matchString = tp.Text.Substring(idx.From, idx.Length);
+                    var preString   = tp.Text!.Substring(oldIdx,   idx.From - oldIdx);
+                    var matchString = tp.Text!.Substring(idx.From, idx.Length);
                     oldIdx = idx.From + idx.Length;
 
                     if (preString.Length > 0)
@@ -101,7 +101,7 @@ namespace ChatAlerts
                 } while (idx.From >= 0);
 
                 if (oldIdx < tp.Text.Length)
-                    ret.Add(new TextPayload(tp.Text.Substring(oldIdx)));
+                    ret.Add(new TextPayload(tp.Text[oldIdx..]));
             }
 
             if (ret != null)
