@@ -3,7 +3,7 @@ author: Caraxi & Ottermandias
 punchline: Play sounds and highlight text based on defined filters.
 description: ''
 repo_url: https://github.com/Ottermandias/ChatAlerts
-dalamud_api_level: 7
+dalamud_api_level: 8
 tags:
   - Chat
   - Highlight
