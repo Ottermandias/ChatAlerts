@@ -70,7 +70,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="DalamudPackager" Version="2.1.7" />
+    <PackageReference Include="DalamudPackager" Version="2.1.10" />
     <PackageReference Include="NAudio" Version="1.10.0" />
   </ItemGroup>
 </Project>
