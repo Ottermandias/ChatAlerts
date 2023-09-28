@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Text.RegularExpressions;
-using Dalamud.Logging;
 using NAudio.Wave;
 
 namespace ChatAlerts
@@ -48,7 +47,7 @@ namespace ChatAlerts
             }
             catch (Exception ex)
             {
-                PluginLog.Error(ex, "Error attempting to compile Regex.");
+                Dalamud.Log.Error(ex, "Error attempting to compile Regex.");
                 CompiledRegex = null;
             }
         }
@@ -80,7 +79,7 @@ namespace ChatAlerts
             }
             catch (Exception ex)
             {
-                PluginLog.Error(ex, "Error attempting to setup sound.");
+                Dalamud.Log.Error(ex, "Error attempting to setup sound.");
                 DisposeAudio();
             }
         }

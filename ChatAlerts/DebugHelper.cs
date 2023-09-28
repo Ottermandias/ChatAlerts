@@ -1,7 +1,6 @@
 ﻿using System;
 using ChatAlerts.SeFunctions;
 using Dalamud.Hooking;
-using Dalamud.Logging;
 
 namespace ChatAlerts
 {
@@ -15,7 +14,7 @@ namespace ChatAlerts
         private ulong PlaySoundDetour(Sounds id, ulong a2, ulong a3)
         {
             var ret = PlaySoundHook!.Original(id, a2, a3);
-            PluginLog.Verbose($"Play Sound: {id} [{a2}, {a3}] => {ret}");
+            Dalamud.Log.Verbose($"Play Sound: {id} [{a2}, {a3}] => {ret}");
             return ret;
         }
 

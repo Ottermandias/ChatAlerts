@@ -4,7 +4,6 @@ using System.Linq;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
-using Dalamud.Logging;
 
 namespace ChatAlerts
 {
@@ -31,7 +30,7 @@ namespace ChatAlerts
             foreach (var alert in Alerts)
                 UpdateAlert(alert);
 
-            PluginLog.Debug($"Watching Channels: {(_watchAllChannels ? "All" : string.Join(", ", _watchedChannels))}");
+            Dalamud.Log.Debug($"Watching Channels: {(_watchAllChannels ? "All" : string.Join(", ", _watchedChannels))}");
         }
 
         internal void UpdateAlert(Alert alert)

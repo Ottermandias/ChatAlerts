@@ -6,7 +6,7 @@ namespace ChatAlerts.SeFunctions
 
     public sealed class PlaySound : SeFunctionBase<PlaySoundDelegate>
     {
-        public PlaySound(SigScanner sigScanner)
+        public PlaySound(ISigScanner sigScanner)
             : base(sigScanner, "E8 ?? ?? ?? ?? 4D 39 BE")
         { }
 
