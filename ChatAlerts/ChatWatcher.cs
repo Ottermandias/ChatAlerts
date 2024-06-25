@@ -5,143 +5,142 @@ using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 
-namespace ChatAlerts
+namespace ChatAlerts;
+
+public class ChatWatcher : IDisposable
 {
-    public class ChatWatcher : IDisposable
+    private readonly SortedSet<XivChatType> _watchedChannels = new();
+    private          bool                   _watchAllChannels;
+
+    private static List<Alert> Alerts
+        => ChatAlerts.Config.Alerts;
+
+    public ChatWatcher()
     {
-        private readonly SortedSet<XivChatType> _watchedChannels = new();
-        private          bool                   _watchAllChannels;
+        UpdateAllAlerts();
+        Dalamud.Chat.CheckMessageHandled += OnCheckMessageHandled;
+        Dalamud.Chat.ChatMessage         += OnChatMessage;
+    }
 
-        private static List<Alert> Alerts
-            => ChatAlerts.Config.Alerts;
+    internal void UpdateAllAlerts()
+    {
+        _watchedChannels.Clear();
+        _watchAllChannels = false;
 
-        public ChatWatcher()
+        foreach (var alert in Alerts)
+            UpdateAlert(alert);
+
+        Dalamud.Log.Debug($"Watching Channels: {(_watchAllChannels ? "All" : string.Join(", ", _watchedChannels))}");
+    }
+
+    internal void UpdateAlert(Alert alert)
+    {
+        alert.Update();
+        _watchAllChannels |= alert.Channels.Contains(XivChatType.None);
+        if (!_watchAllChannels)
+            _watchedChannels.UnionWith(alert.Channels);
+    }
+
+    public void Dispose()
+    {
+        Dalamud.Chat.CheckMessageHandled -= OnCheckMessageHandled;
+        Dalamud.Chat.ChatMessage         -= OnChatMessage;
+    }
+
+    private static void CopySublist(IReadOnlyList<Payload> payloads, List<Payload> newPayloads, int from, int to)
+    {
+        while (from < to)
+            newPayloads.Add(payloads[from++]);
+    }
+
+    private static bool HandleAlert(Alert alert, List<Payload> payloads, out List<Payload> newPayloads)
+    {
+        newPayloads = payloads;
+        var            lastCopiedPayload = 0;
+        List<Payload>? ret               = null;
+        var            match             = false;
+        for (var payload = 0; payload < payloads.Count; ++payload)
         {
-            UpdateAllAlerts();
-            Dalamud.Chat.CheckMessageHandled += OnCheckMessageHandled;
-            Dalamud.Chat.ChatMessage         += OnChatMessage;
-        }
+            if (payloads[payload] is not TextPayload tp)
+                continue;
 
-        internal void UpdateAllAlerts()
-        {
-            _watchedChannels.Clear();
-            _watchAllChannels = false;
+            var oldIdx = 0;
+            var idx    = alert.Match(tp.Text ?? string.Empty, oldIdx);
+            if (idx.From < 0)
+                continue;
 
-            foreach (var alert in Alerts)
-                UpdateAlert(alert);
+            match = true;
+            if (!alert.Highlight)
+                return true;
 
-            Dalamud.Log.Debug($"Watching Channels: {(_watchAllChannels ? "All" : string.Join(", ", _watchedChannels))}");
-        }
+            ret ??= new List<Payload>(payloads.Count + 6);
 
-        internal void UpdateAlert(Alert alert)
-        {
-            alert.Update();
-            _watchAllChannels |= alert.Channels.Contains(XivChatType.None);
-            if (!_watchAllChannels)
-                _watchedChannels.UnionWith(alert.Channels);
-        }
+            CopySublist(payloads, ret!, lastCopiedPayload, payload);
+            lastCopiedPayload = payload + 1;
 
-        public void Dispose()
-        {
-            Dalamud.Chat.CheckMessageHandled -= OnCheckMessageHandled;
-            Dalamud.Chat.ChatMessage         -= OnChatMessage;
-        }
-
-        private static void CopySublist(IReadOnlyList<Payload> payloads, List<Payload> newPayloads, int from, int to)
-        {
-            while (from < to)
-                newPayloads.Add(payloads[from++]);
-        }
-
-        private static bool HandleAlert(Alert alert, List<Payload> payloads, out List<Payload> newPayloads)
-        {
-            newPayloads = payloads;
-            var            lastCopiedPayload = 0;
-            List<Payload>? ret               = null;
-            var            match             = false;
-            for (var payload = 0; payload < payloads.Count; ++payload)
+            do
             {
-                if (payloads[payload] is not TextPayload tp)
-                    continue;
+                var preString   = tp.Text!.Substring(oldIdx,   idx.From - oldIdx);
+                var matchString = tp.Text!.Substring(idx.From, idx.Length);
+                oldIdx = idx.From + idx.Length;
 
-                var oldIdx = 0;
-                var idx    = alert.Match(tp.Text ?? string.Empty, oldIdx);
-                if (idx.From < 0)
-                    continue;
+                if (preString.Length > 0)
+                    ret.Add(new TextPayload(preString));
+                if (alert.HighlightForeground != 0)
+                    ret.Add(new UIForegroundPayload(alert.HighlightForeground));
+                if (alert.HighlightGlow != 0)
+                    ret.Add(new UIGlowPayload(alert.HighlightGlow));
+                ret.Add(new TextPayload(matchString));
+                if (alert.HighlightForeground != 0)
+                    ret.Add(UIForegroundPayload.UIForegroundOff);
+                if (alert.HighlightGlow != 0)
+                    ret.Add(UIGlowPayload.UIGlowOff);
 
-                match = true;
-                if (!alert.Highlight)
-                    return true;
+                idx = alert.Match(tp.Text, oldIdx);
+            } while (idx.From >= 0);
 
-                ret ??= new List<Payload>(payloads.Count + 6);
-
-                CopySublist(payloads, ret!, lastCopiedPayload, payload);
-                lastCopiedPayload = payload + 1;
-
-                do
-                {
-                    var preString   = tp.Text!.Substring(oldIdx,   idx.From - oldIdx);
-                    var matchString = tp.Text!.Substring(idx.From, idx.Length);
-                    oldIdx = idx.From + idx.Length;
-
-                    if (preString.Length > 0)
-                        ret.Add(new TextPayload(preString));
-                    if (alert.HighlightForeground != 0)
-                        ret.Add(new UIForegroundPayload(alert.HighlightForeground));
-                    if (alert.HighlightGlow != 0)
-                        ret.Add(new UIGlowPayload(alert.HighlightGlow));
-                    ret.Add(new TextPayload(matchString));
-                    if (alert.HighlightForeground != 0)
-                        ret.Add(UIForegroundPayload.UIForegroundOff);
-                    if (alert.HighlightGlow != 0)
-                        ret.Add(UIGlowPayload.UIGlowOff);
-
-                    idx = alert.Match(tp.Text, oldIdx);
-                } while (idx.From >= 0);
-
-                if (oldIdx < tp.Text.Length)
-                    ret.Add(new TextPayload(tp.Text[oldIdx..]));
-            }
-
-            if (ret != null)
-            {
-                CopySublist(payloads, ret, lastCopiedPayload, payloads.Count);
-                newPayloads = ret;
-            }
-
-            return match;
+            if (oldIdx < tp.Text.Length)
+                ret.Add(new TextPayload(tp.Text[oldIdx..]));
         }
 
-        private void HandleMessage(XivChatType type, ref SeString sender, ref SeString message, bool preFilter)
+        if (ret != null)
         {
-            if (!(_watchAllChannels || _watchedChannels.Contains(type)))
-                return;
-
-            var soundPlayed = false;
-            foreach (var alert in Alerts.Where(a => a.Enabled
-             && a.CanMatch()
-             && a.IncludeHidden == preFilter
-             && (a.Channels.Contains(XivChatType.None) || a.Channels.Contains(type))))
-            {
-                var payloads   = alert.SenderAlert ? sender.Payloads : message.Payloads;
-                var alertMatch = HandleAlert(alert, payloads, out payloads);
-                if (alert.SenderAlert)
-                    sender = new SeString(payloads);
-                else
-                    message = new SeString(payloads);
-                if (alertMatch && !soundPlayed)
-                    soundPlayed = alert.StartSound();
-            }
+            CopySublist(payloads, ret, lastCopiedPayload, payloads.Count);
+            newPayloads = ret;
         }
 
-        private void OnChatMessage(XivChatType type, uint senderId, ref SeString sender, ref SeString message, ref bool isHandled)
+        return match;
+    }
+
+    private void HandleMessage(XivChatType type, ref SeString sender, ref SeString message, bool preFilter)
+    {
+        if (!(_watchAllChannels || _watchedChannels.Contains(type)))
+            return;
+
+        var soundPlayed = false;
+        foreach (var alert in Alerts.Where(a => a.Enabled
+                  && a.CanMatch()
+                  && a.IncludeHidden == preFilter
+                  && (a.Channels.Contains(XivChatType.None) || a.Channels.Contains(type))))
         {
-            HandleMessage(type, ref sender, ref message, false);
+            var payloads   = alert.SenderAlert ? sender.Payloads : message.Payloads;
+            var alertMatch = HandleAlert(alert, payloads, out payloads);
+            if (alert.SenderAlert)
+                sender = new SeString(payloads);
+            else
+                message = new SeString(payloads);
+            if (alertMatch && !soundPlayed)
+                soundPlayed = alert.StartSound();
         }
+    }
 
-        private void OnCheckMessageHandled(XivChatType type, uint senderId, ref SeString sender, ref SeString message, ref bool isHandled)
-        {
-            HandleMessage(type, ref sender, ref message, true);
-        }
+    private void OnChatMessage(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
+    {
+        HandleMessage(type, ref sender, ref message, false);
+    }
+
+    private void OnCheckMessageHandled(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
+    {
+        HandleMessage(type, ref sender, ref message, true);
     }
 }
