@@ -1,7 +1,7 @@
 name: ChatAlerts
 author: Caraxi & Ottermandias
 punchline: Play sounds and highlight text based on defined filters.
-description: ''
+description: Play sounds and highlight text based on defined filters.
 repo_url: https://github.com/Ottermandias/ChatAlerts
 tags:
   - Chat

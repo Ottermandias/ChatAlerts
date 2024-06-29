@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using ChatAlerts.SeFunctions;
 using Dalamud.Game.Text;
+using FFXIVClientStructs.FFXIV.Client.UI;
 
 namespace ChatAlerts
 {
@@ -38,7 +38,7 @@ namespace ChatAlerts
             if (CustomSound)
                 return _cache.PlaySound();
 
-            ChatAlerts.PlaySound.Play(SoundEffect);
+            UIModule.PlaySound((uint)SoundEffect);
             return true;
         }
 

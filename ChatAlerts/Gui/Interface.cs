@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using ChatAlerts.Gui.Raii;
-using ChatAlerts.SeFunctions;
 using Dalamud.Game.Text;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
+using FFXIVClientStructs.FFXIV.Client.UI;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 
@@ -47,6 +47,7 @@ public class Interface : IDisposable
 
         Dalamud.PluginInterface.UiBuilder.Draw         += Draw;
         Dalamud.PluginInterface.UiBuilder.OpenConfigUi += ToggleVisibility;
+        Dalamud.PluginInterface.UiBuilder.OpenMainUi   += ToggleVisibility;
 
         var colorSheet = Dalamud.GameData.Excel.GetSheet<UIColor>()!;
         _foregroundColors = new Dictionary<ushort, Vector4>((int)colorSheet.RowCount);
@@ -76,6 +77,7 @@ public class Interface : IDisposable
     public void Dispose()
     {
         Dalamud.PluginInterface.UiBuilder.OpenConfigUi -= ToggleVisibility;
+        Dalamud.PluginInterface.UiBuilder.OpenMainUi   -= ToggleVisibility;
         Dalamud.PluginInterface.UiBuilder.Draw         -= Draw;
     }
 
@@ -459,7 +461,7 @@ public class Interface : IDisposable
 
         ImGui.SameLine();
         using var font = ImGuiRaii.PushFont(UiBuilder.IconFont);
-        if (ImGui.Button($"{FontAwesomeIcon.Cross}##alertNoCustomSound{idx}", new Vector2(-1, ImGui.GetItemRectSize().Y)))
+        if (ImGui.Button($"{FontAwesomeIcon.Cross.ToIconChar()}##alertNoCustomSound{idx}", new Vector2(-1, ImGui.GetItemRectSize().Y)))
         {
             alert.CustomSound = false;
             _changedAlert     = alert;
@@ -484,7 +486,7 @@ public class Interface : IDisposable
 
                 _changes          = alert.SoundEffect != se;
                 alert.SoundEffect = se;
-                ChatAlerts.PlaySound.Play(se);
+                UIModule.PlaySound((uint)se);
                 alert.UpdateAudio();
             }
         }
