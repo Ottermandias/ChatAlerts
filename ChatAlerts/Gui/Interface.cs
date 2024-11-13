@@ -8,7 +8,7 @@ using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using ImGuiNET;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 
 namespace ChatAlerts.Gui;
 
@@ -49,9 +49,9 @@ public class Interface : IDisposable
         Dalamud.PluginInterface.UiBuilder.OpenConfigUi += ToggleVisibility;
         Dalamud.PluginInterface.UiBuilder.OpenMainUi   += ToggleVisibility;
 
-        var colorSheet = Dalamud.GameData.Excel.GetSheet<UIColor>()!;
-        _foregroundColors = new Dictionary<ushort, Vector4>((int)colorSheet.RowCount);
-        _glowColors       = new Dictionary<ushort, Vector4>((int)colorSheet.RowCount);
+        var colorSheet = Dalamud.GameData.Excel.GetSheet<UIColor>();
+        _foregroundColors = new Dictionary<ushort, Vector4>(colorSheet.Count);
+        _glowColors       = new Dictionary<ushort, Vector4>(colorSheet.Count);
         foreach (var color in colorSheet)
         {
             var fa = color.UIForeground & 255;
@@ -243,7 +243,7 @@ public class Interface : IDisposable
         var channelListStr = alert.Channels.Contains(XivChatType.None)
             ? "All"
             : string.Join(", ",
-                alert.Channels.Where(c => c != XivChatType.CrossParty).Select(c => c.GetDetails()?.FancyName ?? c.ToString()));
+                alert.Channels.Where(c => c != XivChatType.CrossParty).Select(c => c.GetDetails().FancyName));
         if (!ImGui.BeginCombo($"##alertChannels{idx}", channelListStr, ImGuiComboFlags.HeightLarge))
             return;
 
@@ -257,7 +257,7 @@ public class Interface : IDisposable
                 if (chatType == XivChatType.CrossParty || chatType == XivChatType.Debug || chatType == XivChatType.Urgent)
                     continue;
 
-                var name = chatType == XivChatType.None ? "All" : chatType.GetDetails()?.FancyName ?? chatType.ToString();
+                var name = chatType == XivChatType.None ? "All" : chatType.GetDetails().FancyName;
                 var e    = alert.Channels.Contains(chatType);
 
                 if (ImGui.Checkbox($"{name}##alertChannelOption{(ushort)chatType}", ref e))
@@ -486,7 +486,7 @@ public class Interface : IDisposable
 
                 _changes          = alert.SoundEffect != se;
                 alert.SoundEffect = se;
-                UIModule.PlaySound((uint)se);
+                UIGlobals.PlaySoundEffect((uint)se);
                 alert.UpdateAudio();
             }
         }

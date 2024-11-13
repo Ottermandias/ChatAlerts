@@ -38,7 +38,7 @@ namespace ChatAlerts
             if (CustomSound)
                 return _cache.PlaySound();
 
-            UIModule.PlaySound((uint)SoundEffect);
+            UIGlobals.PlaySoundEffect((uint)SoundEffect);
             return true;
         }
 
