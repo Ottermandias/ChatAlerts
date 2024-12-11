@@ -257,7 +257,7 @@ public class Interface : IDisposable
                 if (chatType == XivChatType.CrossParty || chatType == XivChatType.Debug || chatType == XivChatType.Urgent)
                     continue;
 
-                var name = chatType == XivChatType.None ? "All" : chatType.GetDetails().FancyName;
+                var name = chatType == XivChatType.None ? "All" : chatType.GetAttribute<XivChatTypeInfoAttribute>()?.FancyName ?? Enum.GetName(chatType);
                 var e    = alert.Channels.Contains(chatType);
 
                 if (ImGui.Checkbox($"{name}##alertChannelOption{(ushort)chatType}", ref e))
