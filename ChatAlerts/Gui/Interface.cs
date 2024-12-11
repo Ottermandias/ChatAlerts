@@ -243,7 +243,7 @@ public class Interface : IDisposable
         var channelListStr = alert.Channels.Contains(XivChatType.None)
             ? "All"
             : string.Join(", ",
-                alert.Channels.Where(c => c != XivChatType.CrossParty).Select(c => c.GetDetails().FancyName));
+                alert.Channels.Where(c => c != XivChatType.CrossParty).Select(c => c.GetDetails()?.FancyName ?? c.ToString()));
         if (!ImGui.BeginCombo($"##alertChannels{idx}", channelListStr, ImGuiComboFlags.HeightLarge))
             return;
 
@@ -257,7 +257,7 @@ public class Interface : IDisposable
                 if (chatType == XivChatType.CrossParty || chatType == XivChatType.Debug || chatType == XivChatType.Urgent)
                     continue;
 
-                var name = chatType == XivChatType.None ? "All" : chatType.GetDetails().FancyName;
+                var name = chatType == XivChatType.None ? "All" : chatType.GetDetails()?.FancyName ?? chatType.ToString();
                 var e    = alert.Channels.Contains(chatType);
 
                 if (ImGui.Checkbox($"{name}##alertChannelOption{(ushort)chatType}", ref e))
