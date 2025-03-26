@@ -54,21 +54,21 @@ public class Interface : IDisposable
         _glowColors       = new Dictionary<ushort, Vector4>(colorSheet.Count);
         foreach (var color in colorSheet)
         {
-            var fa = color.UIForeground & 255;
+            var fa = color.Dark & 255;
             if (fa > 0)
             {
-                var fb = (color.UIForeground >> 8) & 255;
-                var fg = (color.UIForeground >> 16) & 255;
-                var fr = (color.UIForeground >> 24) & 255;
+                var fb = (color.Dark >> 8) & 255;
+                var fg = (color.Dark >> 16) & 255;
+                var fr = (color.Dark >> 24) & 255;
                 _foregroundColors[(ushort)color.RowId] = new Vector4(fr / 255f, fg / 255f, fb / 255f, fa / 255f);
             }
 
-            var ga = color.UIGlow & 255;
+            var ga = color.Light & 255;
             if (ga > 0)
             {
-                var gb = (color.UIGlow >> 8) & 255;
-                var gg = (color.UIGlow >> 16) & 255;
-                var gr = (color.UIGlow >> 24) & 255;
+                var gb = (color.Light >> 8) & 255;
+                var gg = (color.Light >> 16) & 255;
+                var gr = (color.Light >> 24) & 255;
                 _glowColors[(ushort)color.RowId] = new Vector4(gr / 255f, gg / 255f, gb / 255f, ga / 255f);
             }
         }
