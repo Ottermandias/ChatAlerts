@@ -7,7 +7,7 @@ using Dalamud.Game.Text;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using FFXIVClientStructs.FFXIV.Client.UI;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using Lumina.Excel.Sheets;
 
 namespace ChatAlerts.Gui;
@@ -250,7 +250,7 @@ public class Interface : IDisposable
         {
             ImGui.Columns(3);
             using var raii = ImGuiRaii.DeferredEnd(ImGui.EndCombo)
-                .Push(ImGui.Columns);
+                .Push(() => ImGui.Columns());
 
             foreach (var chatType in (XivChatType[])Enum.GetValues(typeof(XivChatType)))
             {

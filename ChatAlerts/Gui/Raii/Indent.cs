@@ -1,7 +1,7 @@
 using System;
 using System.Diagnostics;
 using Dalamud.Interface.Utility;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 
 namespace ChatAlerts.Gui.Raii
 {
