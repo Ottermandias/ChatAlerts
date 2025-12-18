@@ -7,10 +7,9 @@
     <Copyright>Copyright © 2025</Copyright>
     <WarningLevel>4</WarningLevel>
     <OutputPath>bin\$(Configuration)\</OutputPath>
-    <UseWindowsForms>True</UseWindowsForms>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="NAudio" Version="2.2.1" />
+    <PackageReference Include="NAudio" Version="1.10.0" />
   </ItemGroup>
 </Project>
