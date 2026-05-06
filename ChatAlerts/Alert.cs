@@ -8,6 +8,7 @@ namespace ChatAlerts
     public class Alert : IDisposable
     {
         public readonly List<XivChatType> Channels  = [];
+        public readonly List<ZoneType>    Zones     = [];
         public          string            Name      = "New Alert";
         public          string            Content   = string.Empty;
         public          string            SoundPath = string.Empty;

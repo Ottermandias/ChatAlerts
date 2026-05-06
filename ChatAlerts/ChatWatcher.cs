@@ -12,15 +12,18 @@ public class ChatWatcher : IDisposable
 {
     private readonly SortedSet<XivChatType> _watchedChannels = new();
     private          bool                   _watchAllChannels;
+    private          ZoneType               _currentZoneType;
 
     private static List<Alert> Alerts
         => ChatAlerts.Config.Alerts;
 
     public ChatWatcher()
     {
+        _currentZoneType = ZoneTypeExtensions.GetCurrentZoneType();
         UpdateAllAlerts();
-        Dalamud.Chat.CheckMessageHandled += OnCheckMessageHandled;
-        Dalamud.Chat.ChatMessage         += OnChatMessage;
+        Dalamud.Chat.CheckMessageHandled          += OnCheckMessageHandled;
+        Dalamud.Chat.ChatMessage                  += OnChatMessage;
+        Dalamud.ClientState.TerritoryChanged      += OnTerritoryChanged;
     }
 
     internal void UpdateAllAlerts()
@@ -44,9 +47,13 @@ public class ChatWatcher : IDisposable
 
     public void Dispose()
     {
-        Dalamud.Chat.CheckMessageHandled -= OnCheckMessageHandled;
-        Dalamud.Chat.ChatMessage         -= OnChatMessage;
+        Dalamud.Chat.CheckMessageHandled     -= OnCheckMessageHandled;
+        Dalamud.Chat.ChatMessage             -= OnChatMessage;
+        Dalamud.ClientState.TerritoryChanged -= OnTerritoryChanged;
     }
+
+    private void OnTerritoryChanged(uint territoryId)
+        => _currentZoneType = ZoneTypeExtensions.GetCurrentZoneType(territoryId);
 
     private static void CopySublist(IReadOnlyList<Payload> payloads, List<Payload> newPayloads, int from, int to)
     {
@@ -122,7 +129,8 @@ public class ChatWatcher : IDisposable
         foreach (var alert in Alerts.Where(a => a.Enabled
                   && a.CanMatch()
                   && a.IncludeHidden == preFilter
-                  && (a.Channels.Contains(XivChatType.None) || a.Channels.Contains(message.LogKind))))
+                  && (a.Channels.Contains(XivChatType.None) || a.Channels.Contains(message.LogKind))
+                  && (a.Zones.Count == 0 || a.Zones.Contains(ZoneType.All) || a.Zones.Contains(_currentZoneType))))
         {
             var payloads   = alert.SenderAlert ? message.Sender.Payloads : message.Message.Payloads;
             var alertMatch = HandleAlert(alert, payloads, out payloads);

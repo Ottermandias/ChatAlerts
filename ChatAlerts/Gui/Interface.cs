@@ -168,6 +168,8 @@ public class Interface : IDisposable
 
         DrawChannels(alert, idx);
 
+        DrawZones(alert, idx);
+
         DrawHighlights(alert, idx);
 
         DrawAudio(alert, idx);
@@ -279,6 +281,46 @@ public class Interface : IDisposable
                 if (chatType == XivChatType.None && e)
                     break;
             }
+        }
+    }
+
+    private void DrawZones(Alert alert, int idx)
+    {
+        AlignLabel("Zones:");
+        var zoneListStr = alert.Zones.Count == 0 || alert.Zones.Contains(ZoneType.All)
+            ? "All"
+            : string.Join(", ", alert.Zones.Where(z => z != ZoneType.All).Select(z => z.ToDisplayName()));
+        if (!ImGui.BeginCombo($"##alertZones{idx}", zoneListStr, ImGuiComboFlags.HeightLarge))
+            return;
+
+        using var raii = ImGuiRaii.DeferredEnd(ImGui.EndCombo);
+
+        foreach (var zoneType in (ZoneType[])Enum.GetValues(typeof(ZoneType)))
+        {
+            var isAll = zoneType == ZoneType.All;
+            var e     = isAll
+                ? alert.Zones.Count == 0 || alert.Zones.Contains(ZoneType.All)
+                : alert.Zones.Contains(zoneType);
+
+            if (!ImGui.Checkbox($"{zoneType.ToDisplayName()}##alertZoneOption{(byte)zoneType}", ref e))
+                continue;
+
+            if (isAll)
+            {
+                alert.Zones.Clear();
+                if (e)
+                    alert.Zones.Add(ZoneType.All);
+            }
+            else
+            {
+                alert.Zones.Remove(ZoneType.All);
+                alert.Zones.Remove(zoneType);
+                if (e)
+                    alert.Zones.Add(zoneType);
+                alert.Zones.Sort();
+            }
+
+            _changes = true;
         }
     }
 
